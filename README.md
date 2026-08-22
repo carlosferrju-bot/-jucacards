@@ -1,0 +1,3 @@
+# JucaCards
+
+Plataforma de flashcards.
