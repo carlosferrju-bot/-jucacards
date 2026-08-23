@@ -1,0 +1,134 @@
+width:100% !important;height:auto;object-fit:contain}
+
+.study-queue-item{
+  transition:transform .15s ease,border-color .15s ease,background .15s ease;
+  user-select:none;
+}
+.study-queue-item:hover{
+  transform:translateY(-1px);
+  border-color:#53627f !important;
+  background:rgba(109,93,252,.08);
+}
+.study-queue-item:focus-visible{
+  outline:2px solid #6d5dfc;
+  outline-offset:2px;
+}
+
+.face-content.long-content{
+  overflow:hidden;
+  align-items:center;
+  justify-content:center;
+}.study-controls{display:flex;justify-content:center;gap:9px;margin-top:16px;flex-wrap:wrap}.rating{display:flex;gap:7px}.rating button{border:1px solid var(--line);padding:9px 12px;border-radius:10px;background:#10192c;color:#fff}.rating .again{border-color:#743346}.rating .hard{border-color:#70571e}.rating .good{border-color:#1c684b}.rating .easy{border-color:#245a80}
+.filterbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}.filterbar select,.filterbar input{background:#0d1425;color:#fff;border:1px solid var(--line);padding:10px;border-radius:10px}
+.calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}.day{padding:10px;border:1px solid var(--line);border-radius:10px;min-height:70px;background:#0d1425}.day b{font-size:12px}.day small{display:block;color:var(--muted);margin-top:8px}
+.table-wrap{overflow:auto}.table{width:100%;border-collapse:collapse}.table th,.table td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size:13px}.table th{color:#8f9bb5;font-size:11px;text-transform:uppercase}.settings-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.toast{position:fixed;right:20px;bottom:20px;background:#101a2d;border:1px solid #33415f;color:#fff;padding:12px 15px;border-radius:12px;box-shadow:var(--shadow);opacity:0;transform:translateY(15px);pointer-events:none;transition:.25s;z-index:100}.toast.show{opacity:1;transform:none}
+
+/* Tema diurno */
+body.light-theme{
+  --bg:#f4f7fb;--panel:#ffffff;--panel2:#eef2f8;--line:#dbe2ee;--text:#172033;--muted:#647089;
+  --shadow:0 14px 35px rgba(30,45,75,.10);
+  background:linear-gradient(145deg,#f8faff,#eef3f9),var(--bg);
+}
+body.light-theme .sidebar{background:rgba(248,250,255,.92);border-right-color:#dbe2ee}
+body.light-theme .nav button{color:#66728b}
+body.light-theme .nav button:hover,
+body.light-theme .nav button.active{background:#e9eef8;color:#172033}
+body.light-theme .mini,
+body.light-theme .stat,
+body.light-theme .card,
+body.light-theme .deck,
+body.light-theme .row,
+body.light-theme .flashcard .face,
+body.light-theme .toolbar select,
+body.light-theme .toolbar input,
+body.light-theme .search,
+body.light-theme .filterbar select,
+body.light-theme .filterbar input{background:#fff;color:var(--text);border-color:#dbe2ee}
+body.light-theme .stat,
+body.light-theme .card{box-shadow:0 10px 30px rgba(30,45,75,.07)}
+body.light-theme .btn{background:#fff;color:#25304a;border-color:#d5ddeb}
+body.light-theme .btn.ghost{background:transparent}
+body.light-theme .editor{background:#fff;border-color:#dbe2ee}
+body.light-theme .editor-bar{background:#f2f5fa;border-color:#dbe2ee}
+body.light-theme .editor-content{color:#172033}
+body.light-theme .modal-box{background:#fff;border-color:#d5ddeb}
+body.light-theme .modal-head,
+body.light-theme .modal-foot{border-color:#dbe2ee}
+body.light-theme .field input,
+body.light-theme .field select,
+body.light-theme .field textarea{background:#fff;color:#172033;border-color:#dbe2ee}
+body.light-theme .table th,
+body.light-theme .table td{border-color:#e1e6ef}
+body.light-theme .progress{background:#e3e8f1}
+body.light-theme .day{background:#fff;border-color:#dbe2ee}
+body.light-theme .flashcard .face.back{background:#f7f9fc}
+body.light-theme .rating button{background:#fff;color:#25304a;border-color:#d5ddeb}
+
+.theme-toggle{
+  width:38px;height:38px;padding:0;border-radius:50%;
+  border:1px solid var(--line);background:rgba(14,20,37,.72);color:#b9c5dc;
+  display:grid;place-items:center;font-size:16px;transition:.2s;
+  box-shadow:0 6px 18px rgba(0,0,0,.12);
+}
+.theme-toggle:hover{transform:translateY(-1px);border-color:#435171;color:#fff}
+body.light-theme .theme-toggle{background:#fff;color:#52617b}
+#themeToggle{position:fixed;top:18px;right:20px;z-index:45}
+#themeToggle + .btn{margin-left:0}
+@media(max-width:850px){#themeToggle{top:12px;right:14px}}
+@media(max-width:850px){.theme-toggle{width:36px;height:36px}.topbar .actions{width:100%}}
+
+@media(max-width:1200px){.flash-wrap{grid-template-columns:1fr}.flash-side{min-height:auto}.cards-grid{grid-template-columns:repeat(2,1fr)}.stats{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:850px){.sidebar{width:72px;padding:18px 10px}.brand div:last-child,.nav button span:last-child,.sidebar-bottom{display:none}.brand{justify-content:center;padding-bottom:20px}.main{margin-left:72px;width:calc(100% - 72px);padding:18px}.two,.three,.settings-grid{grid-template-columns:1fr}.cards-grid{grid-template-columns:1fr}.search{width:100%}.topbar{align-items:flex-start;flex-direction:column}.form-grid{grid-template-columns:1fr}.field.full{grid-column:auto}}
+
+.deck-actions .btn.danger{flex:1}
+.transfer-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+@media(max-width:700px){.transfer-grid{grid-template-columns:1fr}}
+
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="sidebar">
+  <div class="brand"><div class="logo">J</div><div><b>JucaCards</b><small>Study Intelligence</small></div></div>
+  <nav class="nav">
+    <button class="active" data-view="dashboard"><span class="icon">⌂</span><span>Dashboard</span></button>
+    <button data-view="decks"><span class="icon">▦</span><span>Concursos</span></button>
+    <button data-view="cards"><span class="icon">▤</span><span>Flashcards</span></button>
+    <button data-view="study"><span class="icon">◉</span><span>Estudar</span></button>
+    <button data-view="calendar"><span class="icon">◫</span><span>Revisões</span></button>
+    <button data-view="stats"><span class="icon">◒</span><span>Estatísticas</span></button>
+    <button data-view="settings"><span class="icon">⚙</span><span>Configurações</span></button>
+  </nav>
+  <div class="sidebar-bottom"><div class="mini">Dados salvos localmente no navegador.<br><br><b>Ctrl + K</b> abre a busca rápida global.<br><br>Pesquise cards, concursos e disciplinas.</div></div>
+</aside>
+
+<main class="main">
+  <section id="dashboard" class="view active">
+    <div class="topbar"><div class="title"><h1>Bom estudo, Carlos 👋</h1><p>Seu centro de revisão inteligente.</p></div><div class="actions"><button class="theme-toggle" id="themeToggle" title="Alternar tema" aria-label="Alternar tema" onclick="toggleTheme()">☾</button><button class="btn" onclick="openModal('importModal')">Importar backup</button><button class="btn" onclick="openAutoBackupModal()">💾 Backup automático</button><button class="btn" onclick="openModal('importCardsModal')">Importar flashcards</button><button class="btn primary" onclick="openCardModal()">+ Novo flashcard</button></div></div>
+    <div class="grid stats" id="stats"></div>
+    <div class="grid two" style="margin-top:16px">
+      <div class="card"><div class="section-head"><h2>Revisões de hoje</h2><span class="pill blue" id="todayCount">0</span></div><div id="todayList" class="list"></div></div>
+      <div class="card"><div class="section-head"><h2>Atrasadas</h2><span class="pill red" id="overdueCount">0</span></div><div id="overdueList" class="list"></div></div>
+    </div>
+    <div class="grid three" style="margin-top:16px">
+      <div class="card"><h3>Progresso de hoje</h3><div style="font-size:32px;font-weight:900;margin:8px 0" id="todayProgress">0%</div><div class="progress"><i id="todayBar" style="width:0%"></i></div><p class="muted" style="font-size:12px" id="todayProgressText">Nenhuma revisão concluída.</p></div>
+      <div class="card"><h3>Retenção</h3><div style="font-size:32px;font-weight:900;margin:8px 0" id="retention">0%</div><p class="muted">Baseada nas avaliações das sessões.</p></div>
+      <div class="card"><h3>Sequência</h3><div style="font-size:32px;font-weight:900;margin:8px 0" id="streak">0 dias</div><p class="muted">Dias com atividade registrada.</p></div>
+    </div>
+  </section>
+
+  <section id="decks" class="view">
+    <div class="topbar"><div class="title"><h1>Concursos e disciplinas</h1><p>Organize sua base em uma estrutura de Concurso → Disciplina → Flashcards.</p></div><button class="btn primary" onclick="openDeckModal()">+ Novo concurso</button></div>
+    <div class="toolbar" style="margin-bottom:16px"><input class="search" id="deckSearch" placeholder="Pesquisar concurso ou disciplina..." oninput="renderDecks()"></div>
+    <div id="decksGrid" class="cards-grid"></div>
+  </section>
+
+  <section id="cards" class="view">
+    <div class="topbar"><div class="title"><h1>Biblioteca de flashcards</h1><p>Edite, filtre, pesquise e gerencie seus cards.</p></div><button class="btn primary" onclick="openCardModal()">+ Novo flashcard</button></div>
+    <div class="filterbar"><input id="cardSearch" placeholder="Pesquisar..." oninput="renderCards()"><select id="filterDeck" onchange="renderCards()"></select><select id="filterDue" onchange="renderCards()"><option value="all">Todos</option><option value="today">Revisar hoje</option><option value="overdue">Atrasados</option><option value="new">Novos</option></select></div>
+    <div class="card table-wrap"><table class="table"><thead><tr><th>Pergunta</th><th>Tipo</th><th>Concurso</th><th>Disciplina</th><th>Nível</th><th>Próxima revisão</th><th></th></tr></thead><tbody id="cardsTable"></tbody></table></div>
+  </section>
+
+  <section id="study" class="view">
+    <div class="topbar"><div class="title"><h1>Modo de estudo</h1><p>Revisão espaçada com avaliação de dificuldade.</p></div><div class="toolbar"><select id="studyDeck" onchange="startStudy()"></select><select id="studyLimit" onchange="startStudy()"><option value="20">20 cards</option><option value="40">40 cards</option><option value="80">80 cards</option></select></div></div>
