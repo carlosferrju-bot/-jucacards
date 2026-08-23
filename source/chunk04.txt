@@ -1,0 +1,543 @@
+ustifyLeft')" title="Alinhar à esquerda">≡</button><button onclick="formatBack('justifyCenter')" title="Centralizar">≣</button><button onclick="formatBack('justifyRight')" title="Alinhar à direita">≡</button><button onclick="formatBack('justifyFull')" title="Justificar">☰</button><label title="Cor do texto" style="display:flex;align-items:center;justify-content:center;width:34px;height:32px;border-radius:7px;background:transparent;border:1px solid transparent;cursor:pointer"><span style="font-weight:900;color:#ff5c77">A</span><input type="color" value="#ffffff" style="position:absolute;opacity:0;width:1px;height:1px" onchange="applyEditorColor(this.value,'back')"></label><label title="Marca-texto" style="display:flex;align-items:center;justify-content:center;width:34px;height:32px;border-radius:7px;background:transparent;border:1px solid transparent;cursor:pointer"><span style="font-weight:900;background:#f4b740;color:#111;padding:0 2px">A</span><input type="color" value="#fff176" style="position:absolute;opacity:0;width:1px;height:1px" onchange="applyEditorHighlight(this.value,'back')"></label></div><div id="cardBack" class="editor-content" contenteditable="true" data-placeholder="Digite a resposta..."></div></div></div>
+<div class="field"><label>Tipo de flashcard</label><select id="cardType" onchange="updateCardTypeUI()"><option value="normal">Pergunta → Resposta</option><option value="tf">Certo ou Errado → Verso</option></select></div>
+<div class="field"><label>Resposta correta (para Certo ou Errado)</label><select id="cardCorrect"><option value="Certo">CERTO</option><option value="Errado">ERRADO</option></select></div>
+<div class="field full"><small class="muted">Ao colar texto no editor, somente o conteúdo será inserido. Cores, fontes, tamanhos, links e demais formatações da origem não serão carregados.</small></div>
+<div class="field"><label>Tags</label><input id="cardTags" placeholder="lei, artigo, pegadinha"></div>
+<div class="field"><label>Fonte / referência</label><input id="cardSource" placeholder="Ex.: Art. 9º do CPPM"></div>
+</div></div><div class="modal-foot"><button class="btn" onclick="closeModal('cardModal')">Cancelar</button><button class="btn primary" onclick="saveCard()">Salvar flashcard</button></div></div></div>
+
+<div class="modal" id="settingsModal"><div class="modal-box"><div class="modal-head"><h2>Configurar algoritmo</h2><button class="close" onclick="closeModal('settingsModal')">×</button></div><div class="modal-body"><p class="muted">Você pode alterar as regras em Configurações. As alterações valem para as próximas avaliações.</p></div><div class="modal-foot"><button class="btn primary" onclick="closeModal('settingsModal');showView('settings')">Abrir configurações</button></div></div></div>
+
+<div class="modal" id="importCardsModal"><div class="modal-box">
+<div class="modal-head"><h2>Importar flashcards</h2><button class="close" onclick="closeModal('importCardsModal')">×</button></div>
+<div class="modal-body">
+  <div class="field"><label>Arquivo JSON de flashcards</label><input id="importCardsFile" type="file" accept=".json,application/json"></div>
+  <div class="card" style="margin-top:12px;padding:14px;background:rgba(92,124,250,.08);border:1px solid rgba(92,124,250,.2)">
+    <b>Importação segura</b>
+    <p class="muted" style="font-size:12px;margin:7px 0 0">
+      Os flashcards serão <strong>adicionados</strong> à biblioteca atual. Seus cards, revisões e concursos existentes não serão apagados.
+      Se o concurso já existir, o sistema reaproveita o concurso e adiciona a disciplina quando necessário.
+    </p>
+  </div>
+</div>
+<div class="modal-foot">
+  <button class="btn" onclick="closeModal('importCardsModal')">Cancelar</button>
+  <button class="btn primary" onclick="importCardsData()">Adicionar flashcards</button>
+</div>
+</div></div>
+
+<div class="modal" id="autoBackupModal"><div class="modal-box">
+<div class="modal-head"><h2>Backup automático</h2><button class="close" onclick="closeModal('autoBackupModal')">×</button></div>
+<div class="modal-body">
+  <div class="card" style="padding:14px;background:rgba(92,124,250,.08);border:1px solid rgba(92,124,250,.2)">
+    <b>Proteção dos seus estudos</b>
+    <p class="muted" style="font-size:12px;margin:7px 0 0">
+      Você pode escolher um arquivo <strong>.json</strong> no seu computador. Depois disso, sempre que houver uma alteração importante na biblioteca, o JucaCards tentará atualizar esse arquivo automaticamente.
+    </p>
+  </div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px">
+    <button class="btn primary" onclick="chooseAutoBackupFile()">📁 Escolher arquivo de backup</button>
+    <button class="btn" onclick="downloadBackupNow()">⬇ Baixar backup agora</button>
+  </div>
+  <div id="autoBackupStatus" class="muted" style="font-size:12px;margin-top:12px"></div>
+  <div id="autoBackupWarning" class="muted" style="font-size:11px;margin-top:8px">
+    O backup automático para arquivo depende do suporte do navegador ao File System Access API. Mesmo com ele ativado, mantenha cópias externas periódicas.
+  </div>
+</div>
+<div class="modal-foot">
+  <button class="btn" onclick="closeModal('autoBackupModal')">Fechar</button>
+  <button class="btn danger" onclick="disableAutoBackup()">Desativar backup automático</button>
+</div>
+</div></div>
+<div class="modal" id="importModal"><div class="modal-box"><div class="modal-head"><h2>Importar backup</h2><button class="close" onclick="closeModal('importModal')">×</button></div><div class="modal-body"><div class="field"><label>Arquivo JSON</label><input id="importFile" type="file" accept=".json,application/json"></div><p class="muted" style="font-size:12px">Importar backup substitui os dados atuais. Para apenas adicionar novos cards, use “Importar flashcards”.</p></div><div class="modal-foot"><button class="btn" onclick="closeModal('importModal')">Cancelar</button><button class="btn primary" onclick="importData()">Restaurar</button></div></div></div>
+<div class="toast" id="toast"></div>
+
+<div class="modal" id="commandModal">
+  <div class="modal-box" style="max-width:620px">
+    <div class="modal-head">
+      <h2>Busca rápida</h2>
+      <button class="close" onclick="closeModal('commandModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Pesquisar flashcards, concursos ou disciplinas</label>
+        <input id="commandSearch" class="search" style="width:100%" autocomplete="off"
+               placeholder="Digite para pesquisar..." oninput="renderCommandResults()">
+      </div>
+      <div id="commandResults" class="list" style="margin-top:14px"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const KEY='jucacards_v1';
+const defaultState={
+  decks:[
+    {id:'d1',name:'CFO PMBA',desc:'Preparação para o concurso.',color:'#6d5dfc',disciplines:['Direito Penal Militar','Processo Penal Militar','Geografia','Matemática']},
+    {id:'d2',name:'PRF',desc:'Base de revisão.',color:'#35b7ff',disciplines:['Legislação de Trânsito','Direito Constitucional']}
+  ],
+  cards:[],
+  reviews:[],
+  settings:{initial:1,hard:.7,good:1.8,easy:3.2,max:365},
+};
+let state=load(), editingDeck=null, editingCard=null, studyQueue=[], studyIndex=0, studyStats={done:0,good:0}, modalDisciplines=[];
+function load(){try{return JSON.parse(localStorage.getItem(KEY))||structuredClone(defaultState)}catch(e){return structuredClone(defaultState)}}
+function persist(){
+  // Normaliza o histórico antes de salvar: nenhuma revisão de card excluído
+  // pode continuar influenciando retenção ou estatísticas.
+  const activeIds=new Set(state.cards.map(c=>c.id));
+  state.reviews=(state.reviews||[]).filter(r=>activeIds.has(r.card));
+
+  localStorage.setItem(KEY,JSON.stringify(state));
+  refreshDashboard();
+  renderAll();
+
+  scheduleAutoBackup();
+}
+
+function refreshDashboard(){
+  renderStats();
+  renderDueLists();
+}
+function uid(prefix='x'){return prefix+Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
+function esc(s=''){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+function strip(html=''){let d=document.createElement('div');d.innerHTML=html;return d.textContent||d.innerText||''}
+function fmtDate(ts){if(!ts)return 'Novo';return new Date(ts).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'})}
+function isDue(c){return !c.due || c.due<=Date.now()}
+function isToday(c){if(!c.due)return false;let a=new Date(c.due),b=new Date();return a.toDateString()===b.toDateString()}
+function isOverdue(c){return c.due && c.due<Date.now() && !isToday(c)}
+function deckName(id){return state.decks.find(d=>d.id===id)?.name||'Sem concurso'}
+function disciplineCount(d){return d.disciplines?.length||0}
+function cardDueLabel(c){if(!c.due)return '<span class="pill blue">Novo</span>';if(isOverdue(c))return '<span class="pill red">Atrasado</span> '+fmtDate(c.due);if(isToday(c))return '<span class="pill yellow">Hoje</span>';return fmtDate(c.due)}
+function showView(id){
+  document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id===id));
+  document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.view===id));
+  if(id==='study'){
+    const deckEl=document.getElementById('studyDeck');
+    if(deckEl && !deckEl.value) deckEl.value='all';
+    startStudy();
+  }
+  renderAll();
+}
+document.querySelectorAll('.nav button').forEach(b=>{
+  b.addEventListener('click', (e)=>{
+    e.preventDefault();
+    showView(b.dataset.view);
+  });
+});
+
+function openModal(id){document.getElementById(id).classList.add('open')}
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+function toast(msg){let t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200)}
+
+function renderStats(){
+  const total=state.cards.length;
+  const today=state.cards.filter(c=>isToday(c)).length;
+  const overdue=state.cards.filter(c=>isOverdue(c)).length;
+  const newCards=state.cards.filter(c=>!c.due).length;
+
+  const reviews=state.reviews||[];
+  const activeCardIds=new Set(state.cards.map(c=>c.id));
+  const validReviews=reviews.filter(r=>activeCardIds.has(r.card));
+  const success=validReviews.filter(r=>r.rating>=2).length;
+  const retention=validReviews.length?Math.round(success/validReviews.length*100):0;
+
+  document.getElementById('stats').innerHTML=[
+    ['Flashcards',total,'cards na biblioteca'],
+    ['Revisões hoje',today,'programadas para hoje'],
+    ['Atrasadas',overdue,'precisam de atenção'],
+    ['Novos',newCards,'ainda não estudados']
+  ].map(x=>`<div class="stat"><div class="k">${x[0]}</div><strong>${x[1]}</strong><span>${x[2]}</span></div>`).join('');
+
+  const todayCount=document.getElementById('todayCount');
+  const overdueCount=document.getElementById('overdueCount');
+  const retentionEl=document.getElementById('retention');
+  const streakEl=document.getElementById('streak');
+
+  if(todayCount)todayCount.textContent=today;
+  if(overdueCount)overdueCount.textContent=overdue;
+  if(retentionEl)retentionEl.textContent=retention+'%';
+  if(streakEl)streakEl.textContent=calcStreak()+' dias';
+
+  const todayKey=new Date().toDateString();
+  const reviewedTodayIds=new Set(
+    reviews
+      .filter(r=>new Date(r.at).toDateString()===todayKey)
+      .map(r=>r.card)
+  );
+
+  // O denominador usa somente cards que existem atualmente.
+  // Cards excluídos não entram porque não estão em state.cards.
+  const remainingToday=state.cards.filter(c=>isToday(c)||isOverdue(c)).length;
+  const newToday=state.cards.filter(c=>!c.due && !reviewedTodayIds.has(c.id)).length;
+  const doneToday=[...reviewedTodayIds].filter(id=>state.cards.some(c=>c.id===id)).length;
+  const totalToday=doneToday+remainingToday+newToday;
+  const pct=totalToday?Math.min(100,Math.round(doneToday/totalToday*100)):0;
+
+  const progress=document.getElementById('todayProgress');
+  const bar=document.getElementById('todayBar');
+  const text=document.getElementById('todayProgressText');
+
+  if(progress)progress.textContent=pct+'%';
+  if(bar)bar.style.width=pct+'%';
+  if(text){
+    text.textContent=totalToday
+      ? (pct===100
+        ? `${doneToday} de ${totalToday} flashcards disponíveis concluídos hoje! 🎉`
+        : `${doneToday} de ${totalToday} flashcards disponíveis hoje · ${remainingToday+newToday} restantes.`)
+      : 'Nenhum flashcard disponível para estudo hoje.';
+  }
+}
+function renderDueLists(){
+ let today=state.cards.filter(c=>isToday(c)).sort((a,b)=>(a.due||0)-(b.due||0));
+ let over=state.cards.filter(isOverdue).sort((a,b)=>(a.due||0)-(b.due||0));
+ document.getElementById('todayList').innerHTML=renderDueRows(today.slice(0,8),'Nenhuma revisão para hoje. Excelente!');
+ document.getElementById('overdueList').innerHTML=renderDueRows(over.slice(0,8),'Nenhuma revisão atrasada. Tudo em dia!');
+}
+function renderDueRows(arr,empty){return arr.length?arr.map(c=>`<div class="row"><div class="row-main"><b>${esc(strip(c.front)).slice(0,70)}</b><small>${esc(deckName(c.deck))} · ${esc(c.discipline)}</small></div><button class="btn" onclick="studySingle('${c.id}')">Estudar</button></div>`).join(''):`<div class="empty">${empty}</div>`}
+function calcStreak(){let days=new Set(state.reviews.map(r=>new Date(r.at).toDateString()));let d=new Date(),count=0;while(days.has(d.toDateString())){count++;d.setDate(d.getDate()-1)}return count}
+function renderDecks(){
+ let q=(document.getElementById('deckSearch')?.value||'').toLowerCase();
+ let decks=state.decks.filter(d=>(d.name+' '+d.disciplines.join(' ')).toLowerCase().includes(q));
+ document.getElementById('decksGrid').innerHTML=decks.length?decks.map(d=>{
+  let cards=state.cards.filter(c=>c.deck===d.id),due=cards.filter(c=>isDue(c)).length;
+  return `<div class="deck"><div class="deck-top"><div><h3><span class="color-dot" style="background:${d.color}"></span>${esc(d.name)}</h3><div class="meta">${esc(d.desc||'')} · ${cards.length} cards</div></div><span class="pill">${disciplineCount(d)} disciplinas</span></div>
+  <div class="list" style="margin-top:14px">${d.disciplines.map(x=>`<div class="row"><div class="row-main"><b>${esc(x)}</b><small>${cards.filter(c=>c.discipline===x).length} flashcards</small></div></div>`).join('')}</div>
+  <div class="deck-actions"><button class="btn" onclick="editDeck('${d.id}')">Editar / disciplinas</button><button class="btn primary" onclick="openCardModal(null,'${d.id}')">+ Card</button><button class="btn" onclick="studyDeck('${d.id}')">Estudar (${due})</button><button class="btn danger" onclick="openDeleteDeckModal('${d.id}')">Excluir</button></div></div>`
+ }).join(''):`<div class="card empty" style="grid-column:1/-1">Nenhum concurso encontrado.</div>`;
+}
+function renderCards(){
+ const search=(document.getElementById('cardSearch')?.value||'').toLowerCase(),fd=document.getElementById('filterDeck')?.value||'all',fu=document.getElementById('filterDue')?.value||'all';
+ let arr=state.cards.filter(c=>{
+  let ok=(strip(c.front)+' '+strip(c.back)+' '+c.tags+' '+c.discipline).toLowerCase().includes(search);
+  if(fd!=='all')ok&&=c.deck===fd;
+  if(fu==='today')ok&&=isToday(c);if(fu==='overdue')ok&&=isOverdue(c);if(fu==='new')ok&&=!c.due;return ok;
+ });
+ document.getElementById('cardsTable').innerHTML=arr.map(c=>`<tr><td><b>${esc(strip(c.front)).slice(0,80)}</b><div class="muted">${esc(c.tags||'')}</div></td><td>${c.type==='tf'?'<span class="pill yellow">Certo/Errado</span>':'<span class="pill blue">Normal</span>'}</td><td>${esc(deckName(c.deck))}</td><td>${esc(c.discipline)}</td><td>${c.interval||0}d</td><td>${cardDueLabel(c)}</td><td><div class="toolbar"><button class="btn" onclick="editCard('${c.id}')">Editar</button><button class="btn" onclick="openMoveCardModal('${c.id}')">Mover</button><button class="btn danger" onclick="deleteCard('${c.id}')">Excluir</button></div></td></tr>`).join('')||`<tr><td colspan="7" class="empty">Nenhum flashcard encontrado.</td></tr>`;
+}
+function populateSelects(){
+ let opts=state.decks.map(d=>`<option value="${d.id}">${esc(d.name)}</option>`).join('');
+ ['filterDeck','studyDeck','cardDeck'].forEach(id=>{
+   let el=document.getElementById(id);
+   if(el){
+     let old=el.value;
+     const allOption=(id==='filterDeck'||id==='studyDeck')?'<option value="all">Todos os concursos</option>':'';
+     el.innerHTML=allOption+opts;
+     if([...el.options].some(o=>o.value===old)) el.value=old;
+     else if(id==='studyDeck') el.value='all';
+   }
+ });
+ populateDisciplineSelect();
+ if(document.getElementById('study')) renderStudyQueue();
+}
+function populateDisciplineSelect(){
+ let d=state.decks.find(x=>x.id===document.getElementById('cardDeck')?.value)||state.decks[0];
+ const el=document.getElementById('cardDiscipline');
+ if(!el)return;
+ const disciplines=d?.disciplines||[];
+ el.innerHTML=disciplines.length
+   ? disciplines.map(x=>`<option>${esc(x)}</option>`).join('')
+   : '<option value="">Nenhuma disciplina cadastrada</option>';
+}
+function recalculateNow(){
+  const changed=recalculateScheduledReviews();
+  persist();
+  toast(changed
+    ? `Agenda recalculada. ${changed} revisão(ões) atualizada(s).`
+    : 'Nenhuma revisão precisou ser recalculada.');
+}
+function renderCalendar(){
+ let grid=document.getElementById('calendarGrid');let days=[];
+for(let i=0;i<14;i++){
+  let d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()+i);
+  let count=state.cards.filter(c=>{
+    if(!c.due)return false;
+    const due=new Date(c.due);
+    return due.getFullYear()===d.getFullYear() &&
+           due.getMonth()===d.getMonth() &&
+           due.getDate()===d.getDate();
+  }).length;
+  days.push(`<div class="day"><b>${d.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit'})}</b><small>${count} revisão(ões)</small></div>`);
+}
+grid.innerHTML=days.join('');
+ document.getElementById('algoSummary').innerHTML=[['Inicial',state.settings.initial+' dia(s)'],['Difícil','× '+state.settings.hard],['Bom','× '+state.settings.good],['Fácil','× '+state.settings.easy],['Teto',state.settings.max+' dias']].map(x=>`<div class="row"><span>${x[0]}</span><b>${x[1]}</b></div>`).join('');
+}
+function renderStatsPage(){
+ let reviews=state.reviews,success=reviews.filter(r=>r.rating>=2).length;
+ document.getElementById('sTotal').textContent=state.cards.length;document.getElementById('sReviewed').textContent=state.cards.filter(c=>c.reps>0).length;document.getElementById('sAccuracy').textContent=(reviews?Math.round(success/reviews*100):0)+'%';
+ let groups={};state.cards.forEach(c=>{let k=c.discipline;groups[k]=(groups[k]||0)+1});
+ document.getElementById('disciplineStats').innerHTML=Object.entries(groups).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div class="row"><span>${esc(k)}</span><b>${v} cards</b></div>`).join('')||'<div class="empty">Crie seus primeiros flashcards.</div>';
+}
+function renderSettings(){['Initial','Hard','Good','Easy','Max'].forEach(k=>{let id='cfg'+k;let prop=k.toLowerCase();document.getElementById(id).value=state.settings[prop]})}
+function renderAll(){
+  renderStats();
+  renderDueLists();
+  renderDecks();
+  renderCards();
+  populateSelects();
+  renderCalendar();
+  renderStatsPage();
+  renderSettings();
+  renderStudyPerformance();
+
+  const dashboard=document.getElementById('dashboard');
+  if(dashboard?.classList.contains('active')){
+    renderStats();
+    renderDueLists();
+  }
+}
+function renderDisciplineModalList(){
+  const el=document.getElementById('disciplineModalList');
+  if(!el)return;
+  el.innerHTML=modalDisciplines.length
+    ? modalDisciplines.map((name,i)=>`
+      <div class="row">
+        <div class="row-main"><b>${esc(name)}</b><small>Disciplina do concurso</small></div>
+        <button class="btn danger" type="button" onclick="removeDisciplineFromModal(${i})">Remover</button>
+      </div>`).join('')
+    : '<div class="empty" style="padding:16px">Nenhuma disciplina adicionada.</div>';
+}
+function addDisciplineToModal(){
+  const input=document.getElementById('newDiscipline');
+  const name=(input.value||'').trim();
+  if(!name)return toast('Digite o nome da disciplina.');
+  const exists=modalDisciplines.some(x=>x.toLowerCase()===name.toLowerCase());
+  if(exists)return toast('Essa disciplina já foi adicionada.');
+  modalDisciplines.push(name);
+  input.value='';
+  renderDisciplineModalList();
+  input.focus();
+}
+function removeDisciplineFromModal(index){
+  modalDisciplines.splice(index,1);
+  renderDisciplineModalList();
+}
+function openDeckModal(){
+  editingDeck=null;
+  modalDisciplines=[];
+  document.getElementById('deckModalTitle').textContent='Novo concurso';
+  document.getElementById('deckName').value='';
+  document.getElementById('deckDesc').value='';
+  document.getElementById('deckColor').value='#6d5dfc';
+  document.getElementById('newDiscipline').value='';
+  renderDisciplineModalList();
+  openModal('deckModal');
+}
+function editDeck(id){
+  let d=state.decks.find(x=>x.id===id);
+  if(!d)return;
+  editingDeck=id;
+  modalDisciplines=[...(d.disciplines||[])];
+  document.getElementById('deckModalTitle').textContent='Editar concurso e disciplinas';
+  document.getElementById('deckName').value=d.name;
+  document.getElementById('deckDesc').value=d.desc||'';
+  document.getElementById('deckColor').value=d.color||'#6d5dfc';
+  document.getElementById('newDiscipline').value='';
+  renderDisciplineModalList();
+  openModal('deckModal');
+}
+function saveDeck(){
+  let name=document.getElementById('deckName').value.trim();
+  if(!name)return toast('Informe o nome do concurso.');
+  const duplicate=state.decks.find(x=>x.id!==editingDeck && String(x.name||'').trim().toLowerCase()===name.toLowerCase());
+  if(duplicate)return toast('Já existe um concurso com esse nome.');
+  if(editingDeck){
+    let d=state.decks.find(x=>x.id===editingDeck);
+    const oldDisciplines=d.disciplines||[];
+    d.name=name;
+    d.desc=document.getElementById('deckDesc').value;
+    d.color=document.getElementById('deckColor').value;
+    d.disciplines=[...modalDisciplines];
+
+    // Cards belonging to removed disciplines are preserved rather than deleted.
+    // They remain associated with the original discipline and can still be edited.
+    if(oldDisciplines.length!==d.disciplines.length){
+      toast('Concurso e disciplinas atualizados.');
+    }
+  }else{
+    state.decks.push({
+      id:uid('d'),
+      name,
+      desc:document.getElementById('deckDesc').value,
+      color:document.getElementById('deckColor').value,
+      disciplines:[...modalDisciplines]
+    });
+  }
+  closeModal('deckModal');
+  persist();
+  toast(editingDeck?'Concurso atualizado.':'Concurso criado.');
+}
+function openCardModal(id=null,deckId=null){
+  editingCard=id;
+  let c=id?state.cards.find(x=>x.id===id):null;
+  document.getElementById('cardModalTitle').textContent=c?'Editar flashcard':'Novo flashcard';
+  document.getElementById('cardFront').innerHTML=c?.front||'';
+  document.getElementById('cardBack').innerHTML=c?.back||'';
+  document.getElementById('cardTags').value=c?.tags||'';
+  document.getElementById('cardSource').value=c?.source||'';
+  document.getElementById('cardType').value=c?.type||'normal';
+  document.getElementById('cardCorrect').value=c?.correct||'Certo';
+  populateSelects();
+  if(deckId)document.getElementById('cardDeck').value=deckId;
+  else if(c)document.getElementById('cardDeck').value=c.deck;
+  populateDisciplineSelect();
+  if(c)document.getElementById('cardDiscipline').value=c.discipline;
+  updateCardTypeUI();
+  openModal('cardModal');
+}
+function updateCardTypeUI(){
+  const type=document.getElementById('cardType')?.value||'normal';
+  const correct=document.getElementById('cardCorrect')?.closest('.field');
+  if(correct)correct.style.display=type==='tf'?'grid':'none';
+  const front=document.getElementById('cardFront');
+  const back=document.getElementById('cardBack');
+  if(type==='tf'){
+    front.dataset.placeholder='Digite uma afirmação para o aluno julgar como CERTO ou ERRADO...';
+    back.dataset.placeholder='Explique por que a afirmação é certa ou errada...';
+  }else{
+    front.dataset.placeholder='Digite a pergunta...';
+    back.dataset.placeholder='Digite a resposta...';
+  }
+}
+
+let movingCardId=null;
+let deletingDeckId=null;
+
+function populateMoveDeckSelect(selectedId=''){
+  const el=document.getElementById('moveCardDeck');
+  if(!el)return;
+  el.innerHTML=state.decks.map(d=>`<option value="${d.id}">${esc(d.name)}</option>`).join('');
+  if(selectedId && [...el.options].some(o=>o.value===selectedId)) el.value=selectedId;
+  populateMoveDisciplineSelect();
+}
+
+function populateMoveDisciplineSelect(selectedDiscipline=''){
+  const deckId=document.getElementById('moveCardDeck')?.value;
+  const el=document.getElementById('moveCardDiscipline');
+  if(!el)return;
+  const d=state.decks.find(x=>x.id===deckId);
+  const disciplines=d?.disciplines||[];
+  el.innerHTML=disciplines.length
+    ? disciplines.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('')
+    : '<option value="">Nenhuma disciplina cadastrada</option>';
+  if(selectedDiscipline && disciplines.includes(selectedDiscipline)) el.value=selectedDiscipline;
+}
+
+function openMoveCardModal(id){
+  const c=state.cards.find(x=>x.id===id);
+  if(!c)return toast('Flashcard não encontrado.');
+  movingCardId=id;
+
+  const preview=document.getElementById('moveCardPreview');
+  preview.innerHTML=`<b>${esc(strip(c.front)).slice(0,180)}</b><div class="muted" style="font-size:12px;margin-top:5px">${esc(deckName(c.deck))} · ${esc(c.discipline)}</div>`;
+
+  populateMoveDeckSelect(c.deck);
+  populateMoveDisciplineSelect(c.discipline);
+  openModal('moveCardModal');
+}
+
+function saveMoveCard(){
+  if(!movingCardId)return;
+  const c=state.cards.find(x=>x.id===movingCardId);
+  const deckId=document.getElementById('moveCardDeck')?.value;
+  const discipline=document.getElementById('moveCardDiscipline')?.value;
+
+  if(!c || !deckId)return toast('Selecione um concurso.');
+  const d=state.decks.find(x=>x.id===deckId);
+  if(!d)return toast('Concurso não encontrado.');
+  if(!discipline)return toast('Selecione uma disciplina.');
+
+  if(!Array.isArray(d.disciplines))d.disciplines=[];
+  if(!d.disciplines.includes(discipline))d.disciplines.push(discipline);
+
+  c.deck=deckId;
+  c.discipline=discipline;
+
+  closeModal('moveCardModal');
+  movingCardId=null;
+  persist();
+  toast('Flashcard movido com sucesso.');
+}
+
+function openDeleteDeckModal(id){
+  const d=state.decks.find(x=>x.id===id);
+  if(!d)return toast('Concurso não encontrado.');
+
+  deletingDeckId=id;
+  const cards=state.cards.filter(c=>c.deck===id);
+  const msg=document.getElementById('deleteDeckMessage');
+  const wrap=document.getElementById('deleteDeckTargetWrap');
+  const target=document.getElementById('deleteDeckTarget');
+
+  if(cards.length){
+    msg.textContent=`O concurso "${d.name}" possui ${cards.length} flashcard(s). Para excluí-lo sem perder esses cards, escolha outro concurso para receber todos eles.`;
+    const others=state.decks.filter(x=>x.id!==id);
+    target.innerHTML=others.length
+      ? others.map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join('')
+      : '';
+    wrap.style.display=others.length?'grid':'none';
+    document.getElementById('deleteDeckConfirm').textContent=others.length?'Excluir e transferir cards':'Excluir concurso';
+  }else{
+    msg.textContent=`O concurso "${d.name}" não possui flashcards. Ele poderá ser excluído sem transferência.`;
+    wrap.style.display='none';
+    target.innerHTML='';
+    document.getElementById('deleteDeckConfirm').textContent='Excluir concurso';
+  }
+
+  openModal('deleteDeckModal');
+}
+
+function confirmDeleteDeck(){
+  if(!deletingDeckId)return;
+  const d=state.decks.find(x=>x.id===deletingDeckId);
+  if(!d)return;
+
+  const cards=state.cards.filter(c=>c.deck===deletingDeckId);
+  if(cards.length){
+    const targetId=document.getElementById('deleteDeckTarget')?.value;
+    if(!targetId)return toast('Escolha o concurso que receberá os flashcards.');
+
+    const target=state.decks.find(x=>x.id===targetId);
+    if(!target)return toast('Concurso de destino não encontrado.');
+
+    if(!Array.isArray(target.disciplines))target.disciplines=[];
+    cards.forEach(c=>{
+      c.deck=target.id;
+      if(!target.disciplines.includes(c.discipline))target.disciplines.push(c.discipline);
+    });
+  }
+
+  state.decks=state.decks.filter(x=>x.id!==deletingDeckId);
+  closeModal('deleteDeckModal');
+  deletingDeckId=null;
+  persist();
+  toast('Concurso excluído.');
+}
+
+function saveCard(){
+  const deck=document.getElementById('cardDeck').value;
+  const discipline=document.getElementById('cardDiscipline').value;
+  const front=document.getElementById('cardFront').innerHTML.trim();
+  const back=document.getElementById('cardBack').innerHTML.trim();
+  if(!deck)return toast('Selecione um concurso.');
+  if(!discipline)return toast('Selecione uma disciplina.');
+  if(!strip(front).trim())return toast('Digite a pergunta.');
+  if(!strip(back).trim())return toast('Digite a resposta.');
+
+  const type=document.getElementById('cardType').value;
+  const correct=document.getElementById('cardCorrect').value;
+  const tags=document.getElementById('cardTags').value;
+  const source=document.getElementById('cardSource').value;
+
+  if(editingCard){
+    let c=state.cards.find(x=>x.id===editingCard);
+    c.deck=deck;c.discipline=discipline;c.front=front;c.back=back;c.type=type;c.correct=correct;c.tags=tags;c.source=source;
+  }else{
+    state.cards.push({id:uid('c'),deck,discipline,front,back,type,correct,tags,source,due:null,interval:0,reps:0,ease:2.5});
+  }
+  closeModal('cardModal');persist();toast(editingCard?'Flashcard atualizado.':'Flashcard criado.');
+}
+function editCard(id){openCardModal(id)}
+function deleteCard(id){if(!confirm('Excluir este flashcard?'))return;state.cards=state.cards.filter(c=>c.id!==id);state.reviews=state.reviews.filter(r=>r.card!==id);persist();toast('Flashcard excluído.')}
+function studyDeck(id){document.getElementById('studyDeck').value=id;showView('study')}
+function studySingle(id){studyQueue=[state.cards.find(c=>c.id===id)].filter(Boolean);studyIndex=0;showView('study');renderStudy()}
