@@ -1,0 +1,93 @@
+  <div class="flash-wrap">
+      <div class="card flash-side"><h3>Fila</h3><div id="studyQueue"></div></div>
+      <div class="flash-stage">
+        <div style="width:100%">
+          <div class="flashcard" id="flashcard" onclick="flipCard()"><div class="flash-inner">
+            <article class="face"><div class="face-label" id="frontMeta">Pergunta</div><div class="flash-font-controls" onclick="event.stopPropagation()" title="Tamanho da fonte"><button type="button" onclick="changeFlashFont(-1);event.stopPropagation()" aria-label="Diminuir fonte" title="Diminuir fonte">A−</button><span class="flash-font-size-label" id="flashFontSizeLabel">100%</span><button type="button" onclick="changeFlashFont(1);event.stopPropagation()" aria-label="Aumentar fonte" title="Aumentar fonte">A+</button></div><div class="face-content" id="frontContent">Nenhum card disponível.</div><div class="muted" style="text-align:center;font-size:12px">Clique para virar</div></article>
+            <article class="face back"><div class="face-label" id="backLabel">Resposta</div><div class="flash-font-controls" onclick="event.stopPropagation()" title="Tamanho da fonte"><button type="button" onclick="changeFlashFont(-1);event.stopPropagation()" aria-label="Diminuir fonte" title="Diminuir fonte">A−</button><span class="flash-font-size-label" id="flashFontSizeLabelBack">100%</span><button type="button" onclick="changeFlashFont(1);event.stopPropagation()" aria-label="Aumentar fonte" title="Aumentar fonte">A+</button></div><div class="face-content" id="backContent">—</div><div class="muted" id="answerFeedback" style="text-align:center;font-size:12px">Clique para virar o card.</div></article>
+          </div></div>
+          <div id="tfControls" class="study-controls" style="display:none"><button class="btn danger" onclick="answerTF('Errado')">✕ ERRADO</button><button class="btn success" onclick="answerTF('Certo')">✓ CERTO</button></div>
+<div id="normalControls" class="study-controls"><button class="btn ghost" onclick="skipStudy()">Pular</button><button class="btn" onclick="restartStudyQueue()">↺ Reiniciar fila</button></div>
+<div id="ratingControls" class="study-controls" style="display:none"><button class="btn ghost" onclick="skipStudy()">Pular</button><div class="rating"><button class="again" onclick="rateCard(0)">De novo</button><button class="hard" onclick="rateCard(1)">Difícil</button><button class="good" onclick="rateCard(2)">Bom</button><button class="easy" onclick="rateCard(3)">Fácil</button></div></div>
+        </div>
+      </div>
+      <div class="card flash-side"><h3>Desempenho</h3><div id="studyPerformance"></div><hr style="border:0;border-top:1px solid var(--line);margin:15px 0"><p class="muted" style="font-size:12px">Atalho: <b>Espaço</b> vira o card. <b>1–4</b> avaliam.</p></div>
+    </div>
+  </section>
+
+  <section id="calendar" class="view">
+    <div class="topbar"><div class="title"><h1>Revisões</h1><p>Visualize o calendário e configure o comportamento do algoritmo.</p></div><div class="actions"><button class="btn" onclick="recalculateNow()">↻ Recalcular agenda</button><button class="btn primary" onclick="openModal('settingsModal')">Configurar algoritmo</button></div></div>
+    <div class="grid two"><div class="card"><div class="section-head"><h2>Próximos 14 dias</h2><span class="muted" id="calendarMonth"></span></div><div id="calendarGrid" class="calendar"></div></div><div class="card"><h2>Como funciona</h2><p class="muted">Cada avaliação altera o intervalo da próxima revisão. “De novo” reinicia o intervalo; “Difícil”, “Bom” e “Fácil” ampliam progressivamente.</p><div id="algoSummary" class="list"></div></div></div>
+  </section>
+
+  <section id="stats" class="view">
+    <div class="topbar"><div class="title"><h1>Estatísticas</h1><p>Acompanhe volume, retenção e evolução da sua base.</p></div></div>
+    <div class="grid three"><div class="card"><h3>Total de cards</h3><strong style="font-size:34px" id="sTotal">0</strong></div><div class="card"><h3>Revisados</h3><strong style="font-size:34px" id="sReviewed">0</strong></div><div class="card"><h3>Acurácia</h3><strong style="font-size:34px" id="sAccuracy">0%</strong></div></div>
+    <div class="card" style="margin-top:16px"><h2>Distribuição por disciplina</h2><div id="disciplineStats" class="list"></div></div>
+  </section>
+
+  <section id="settings" class="view">
+    <div class="topbar"><div class="title"><h1>Configurações</h1><p>Personalize o algoritmo, a interface e seus dados.</p></div></div>
+    <div class="settings-grid">
+      <div class="card"><h2>Repetição espaçada</h2><div class="form-grid">
+        <div class="field"><label>Intervalo inicial (dias)</label><input id="cfgInitial" type="number" min="0" step="0.1"></div>
+        <div class="field"><label>Multiplicador — Difícil</label><input id="cfgHard" type="number" min="0.1" step="0.05"></div>
+        <div class="field"><label>Multiplicador — Bom</label><input id="cfgGood" type="number" min="0.1" step="0.05"></div>
+        <div class="field"><label>Multiplicador — Fácil</label><input id="cfgEasy" type="number" min="0.1" step="0.05"></div>
+        <div class="field"><label>Limite máximo (dias)</label><input id="cfgMax" type="number" min="1"></div>
+      </div>
+      <p class="muted" style="font-size:12px;margin:12px 0 0">Ao salvar, as revisões que já estão programadas também serão recalculadas com a nova regra.</p>
+      <button class="btn primary" style="margin-top:14px" onclick="saveSettings()">Salvar e aplicar algoritmo</button></div>
+      <div class="card"><h2>Dados</h2><p class="muted">Faça backup da sua biblioteca ou restaure um arquivo JSON.</p><div class="toolbar"><button class="btn" onclick="exportData()">Exportar backup</button><button class="btn" onclick="openModal('importModal')">Importar backup</button><button class="btn" onclick="openModal('importCardsModal')">Importar flashcards</button><button class="btn danger" onclick="resetData()">Apagar todos os dados</button></div></div>
+    </div>
+  </section>
+</main>
+</div>
+
+<div class="modal" id="deckModal"><div class="modal-box"><div class="modal-head"><h2 id="deckModalTitle">Novo concurso</h2><button class="close" onclick="closeModal('deckModal')">×</button></div><div class="modal-body"><div class="form-grid">
+<div class="field"><label>Nome do concurso</label><input id="deckName" placeholder="Ex.: CFO PMBA"></div>
+<div class="field"><label>Cor</label><input id="deckColor" type="color" value="#6d5dfc"></div>
+<div class="field full"><label>Descrição</label><textarea id="deckDesc" placeholder="Objetivo, edital, observações..."></textarea></div>
+<div class="field full">
+  <label>Disciplinas</label>
+  <div class="toolbar" style="display:flex;align-items:stretch">
+    <input id="newDiscipline" placeholder="Ex.: Direito Constitucional" style="flex:1">
+    <button type="button" class="btn primary" onclick="addDisciplineToModal()">+ Adicionar</button>
+  </div>
+  <div id="disciplineModalList" class="list" style="margin-top:10px"></div>
+  <small class="muted">Adicione uma disciplina por vez. Você poderá criar flashcards dentro dela.</small>
+</div>
+</div></div><div class="modal-foot"><button class="btn" onclick="closeModal('deckModal')">Cancelar</button><button class="btn primary" onclick="saveDeck()">Salvar concurso</button></div></div></div>
+
+<div class="modal" id="moveCardModal"><div class="modal-box">
+<div class="modal-head"><h2>Mover flashcard</h2><button class="close" onclick="closeModal('moveCardModal')">×</button></div>
+<div class="modal-body">
+  <div class="field"><label>Flashcard</label><div id="moveCardPreview" class="card" style="padding:12px;margin-top:4px"></div></div>
+  <div class="transfer-grid" style="margin-top:14px">
+    <div class="field"><label>Novo concurso</label><select id="moveCardDeck" onchange="populateMoveDisciplineSelect()"></select></div>
+    <div class="field"><label>Nova disciplina</label><select id="moveCardDiscipline"></select></div>
+  </div>
+  <p class="muted" style="font-size:12px;margin-top:12px">O conteúdo, tags, fonte e histórico de revisões do flashcard serão preservados.</p>
+</div>
+<div class="modal-foot"><button class="btn" onclick="closeModal('moveCardModal')">Cancelar</button><button class="btn primary" onclick="saveMoveCard()">Mover flashcard</button></div>
+</div></div>
+
+<div class="modal" id="deleteDeckModal"><div class="modal-box">
+<div class="modal-head"><h2>Excluir concurso</h2><button class="close" onclick="closeModal('deleteDeckModal')">×</button></div>
+<div class="modal-body">
+  <p id="deleteDeckMessage" class="muted"></p>
+  <div id="deleteDeckTargetWrap" class="field" style="margin-top:14px;display:none">
+    <label>Transferir os flashcards para</label>
+    <select id="deleteDeckTarget"></select>
+  </div>
+  <p class="muted" style="font-size:12px;margin-top:12px">O concurso será removido. Os flashcards só serão excluídos se você confirmar explicitamente essa opção.</p>
+</div>
+<div class="modal-foot">
+  <button class="btn" onclick="closeModal('deleteDeckModal')">Cancelar</button>
+  <button class="btn danger" id="deleteDeckConfirm" onclick="confirmDeleteDeck()">Excluir concurso</button>
+</div>
+</div></div>
+<div class="modal" id="cardModal"><div class="modal-box"><div class="modal-head"><h2 id="cardModalTitle">Novo flashcard</h2><button class="close" onclick="closeModal('cardModal')">×</button></div><div class="modal-body"><div class="form-grid">
+<div class="field"><label>Concurso</label><select id="cardDeck" onchange="populateDisciplineSelect()"></select></div>
+<div class="field"><label>Disciplina</label><select id="cardDiscipline"></select></div>
+<div class="field full"><label>Pergunta / frente</label><div class="editor"><div class="editor-bar"><button onclick="format('bold')"><b>B</b></button><button onclick="format('italic')"><i>I</i></button><button onclick="format('underline')"><u>U</u></button><button onclick="format('insertUnorderedList')">☷</button><button onclick="format('formatBlock','H3')">H</button><button onclick="format('justifyLeft')" title="Alinhar à esquerda">≡</button><button onclick="format('justifyCenter')" title="Centralizar">≣</button><button onclick="format('justifyRight')" title="Alinhar à direita">≡</button><button onclick="format('justifyFull')" title="Justificar">☰</button><button onclick="insertLink()">↗</button><label title="Cor do texto" style="display:flex;align-items:center;justify-content:center;width:34px;height:32px;border-radius:7px;background:transparent;border:1px solid transparent;cursor:pointer"><span style="font-weight:900;color:#ff5c77">A</span><input type="color" value="#ffffff" style="position:absolute;opacity:0;width:1px;height:1px" onchange="applyEditorColor(this.value,'front')"></label><label title="Marca-texto" style="display:flex;align-items:center;justify-content:center;width:34px;height:32px;border-radius:7px;background:transparent;border:1px solid transparent;cursor:pointer"><span style="font-weight:900;background:#f4b740;color:#111;padding:0 2px">A</span><input type="color" value="#fff176" style="position:absolute;opacity:0;width:1px;height:1px" onchange="applyEditorHighlight(this.value,'front')"></label></div><div id="cardFront" class="editor-content" contenteditable="true" data-placeholder="Digite a pergunta..."></div></div></div>
