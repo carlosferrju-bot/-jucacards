@@ -1,0 +1,59 @@
+name: Remove JucaCards timer
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  remove-timer:
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Remove timer feature from index.html
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+
+          # Sidebar/navigation item.
+          s = s.replace("['timer','⏱️','Cronômetro'],", '')
+
+          # Timer page rendering branch.
+          s = s.replace("else if(state.page==='timer')p.innerHTML=timerPage();", '')
+
+          # Timer state.
+          s = re.sub(r",timer:\{running:false,started:0,accumulated:0\}", '', s, count=1)
+
+          # Timer CSS.
+          s = re.sub(r"\.timer\{font-size:64px;font-weight:800;font-variant-numeric:tabular-nums;text-align:center;padding:28px\}", '', s, count=1)
+          s = re.sub(r"\.timer\{font-size:45px\}", '', s, count=1)
+
+          # Timer page/functions, from timerElapsed through just before stats().
+          s = re.sub(r"function timerElapsed\(\).*?function stats\(\)", "function stats()", s, count=1, flags=re.S)
+
+          # Dashboard shortcut to timer.
+          s = re.sub(r"<button class=\\\"btn\\\" onclick=\\\"view\('timer'\)\\\">Cronômetro</button>", '', s)
+          s = s.replace('<button class="btn" onclick="view(\'timer\')">Cronômetro</button>', '')
+
+          p.write_text(s, encoding='utf-8')
+      - name: Commit
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          if git diff --cached --quiet; then
+            echo 'No timer code found; nothing to change.'
+            exit 0
+          fi
+          git commit -m 'Remove study timer [skip ci]'
+          git push
