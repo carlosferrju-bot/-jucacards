@@ -77,5 +77,7 @@ function strip(s){const x=document.createElement('div');x.innerHTML=s||'';return
 function quickKey(e){if(e.key==='Escape')closeQuickSearch()}
 document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();openQuickSearch()}if(e.key==='Escape')closeQuickSearch()});
 navRender();render();
+
+init();
 </script>
 </body></html>
