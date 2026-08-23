@@ -5,19 +5,21 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#071b45">
 <title>JucaCards</title>
-<style>html,body{margin:0;min-height:100%;font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:#f5f7fb;color:#12213a}#loading{min-height:100vh;display:grid;place-items:center;text-align:center;padding:24px}#loading .box{max-width:520px;padding:32px;border:1px solid #dce4f0;border-radius:18px;background:#fff;box-shadow:0 20px 50px #10204014}#loading b{font-size:24px}#loading p{color:#66758f;line-height:1.5}</style>
+<style>
+html,body{margin:0;min-height:100%;font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:#f5f7fb;color:#12213a}
+#loading{min-height:100vh;display:grid;place-items:center;text-align:center;padding:24px}
+#loading .box{max-width:520px;padding:32px;border:1px solid #dce4f0;border-radius:18px;background:#fff;box-shadow:0 20px 50px #10204014}
+#loading b{font-size:24px}#loading p{color:#66758f;line-height:1.5}
+</style>
 </head>
 <body>
 <div id="loading"><div class="box"><b>JucaCards</b><p>Carregando sua plataforma completa de estudos…</p></div></div>
 <script>
 (async()=>{
   try{
-    // A plataforma é montada diretamente dos blocos-fonte versionados.
-    // Isso preserva exatamente o HTML original e permite evoluir a interface
-    // sem depender de um payload binário único.
-    const files=['source/chunk01.txt','source/chunk02.txt','source/chunk03.txt','source/chunk04.txt'];
+    const files=['./source/chunk01.txt','./source/chunk02.txt','./source/chunk03.txt','./source/chunk04.txt'];
     const parts=await Promise.all(files.map(async file=>{
-      const r=await fetch('./'+file,{cache:'no-store'});
+      const r=await fetch(file,{cache:'no-store'});
       if(!r.ok) throw new Error('Não foi possível carregar '+file+'.');
       return r.text();
     }));
