@@ -1,1 +1,1 @@
-Deployment trigger for JucaCards persistence migration.
+Persistence bootstrap fix deployed. Do not overwrite populated local data with empty remote data.
