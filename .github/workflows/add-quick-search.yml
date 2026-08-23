@@ -1,4 +1,4 @@
-name: Add JucaCards quick search
+name: Add JucaCards client enhancements
 
 on:
   push:
@@ -8,14 +8,14 @@ permissions:
   contents: write
 
 jobs:
-  add-search:
+  enhance:
     if: "!contains(github.event.head_commit.message, '[skip ci]')"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Add Ctrl+K quick search
+      - name: Ensure quick search and persistence loader
         shell: python
         run: |
           from pathlib import Path
@@ -60,60 +60,42 @@ jobs:
             </div>
           </div>
           '''
-              s = s.replace('<div class="modal" id="modal"><div class="modalbox" id="modalbox"></div></div>', '<div class="modal" id="modal"><div class="modalbox" id="modalbox"></div></div>' + modal, 1)
+              marker = '<div class="modal" id="modal"><div class="modalbox" id="modalbox"></div></div>'
+              s = s.replace(marker, marker + modal, 1)
 
               js = r'''
           function quickSearchItems(){
             const items=[];
-            D.decks.forEach(d=>items.push({type:'Concurso',title:d,meta:`${D.cards.filter(c=>c.deck===d).length} flashcard(s)`,action:()=>openDeckCards(d)}));
-            D.cards.forEach(c=>items.push({type:'Flashcard',title:c.q,meta:c.deck,action:()=>startCard(c.id)}));
-            const disciplines=[...new Set(D.cards.map(c=>String(c.discipline||c.subject||'')).filter(Boolean))];
-            disciplines.forEach(d=>items.push({type:'Disciplina',title:d,meta:'Disciplina dos flashcards',action:()=>{state.filter='';state.deckFilter='';view('cards');setTimeout(()=>{state.filter=d;render()},0)}}));
+            D.decks.forEach(d=>items.push({type:'Concurso',title:d.name||d,meta:`${D.cards.filter(c=>c.deck===d.id||c.deck===d).length} flashcard(s)`,action:()=>{S.page='cards';S.deck=d.id||'';render()}}));
+            D.cards.forEach(c=>items.push({type:'Flashcard',title:c.q,meta:c.deck,action:()=>{S.page='study';S.studyId=c.id;S.showAnswer=false;render()}}));
+            const disciplines=[...new Set(D.cards.map(c=>String(c.discipline||'')).filter(Boolean))];
+            disciplines.forEach(d=>items.push({type:'Disciplina',title:d,meta:'Disciplina dos flashcards',action:()=>{S.page='cards';S.filter=d;render()}}));
             return items;
           }
-          function openQuickSearch(){
-            const q=$('quickSearch');
-            if(!q)return;
-            q.classList.add('show');
-            const input=$('quickSearchInput');
-            if(input){input.value='';renderQuickSearch();setTimeout(()=>input.focus(),20)}
-          }
+          function openQuickSearch(){const q=$('quickSearch');if(!q)return;q.classList.add('show');const input=$('quickSearchInput');if(input){input.value='';renderQuickSearch();setTimeout(()=>input.focus(),20)}}
           function closeQuickSearch(){const q=$('quickSearch');if(q)q.classList.remove('show')}
-          function renderQuickSearch(){
-            const input=$('quickSearchInput'),box=$('quickSearchResults');if(!input||!box)return;
-            const q=input.value.trim().toLowerCase();
-            const items=quickSearchItems().filter(x=>!q||`${x.title} ${x.meta} ${x.type}`.toLowerCase().includes(q)).slice(0,30);
-            box.innerHTML=items.length?items.map((x,i)=>`<button class="quick-search-result ${i===0?'active':''}" data-search-index="${i}" onclick="chooseQuickSearch(${i})"><div class="quick-search-result-title">▤ ${esc(x.title)}</div><div class="quick-search-result-meta">${esc(x.type)} · ${esc(x.meta)}</div></button>`).join(''):`<div class="quick-search-empty">Nenhum resultado encontrado.</div>`;
-            window.__quickSearchItems=items;
-          }
+          function renderQuickSearch(){const input=$('quickSearchInput'),box=$('quickSearchResults');if(!input||!box)return;const q=input.value.trim().toLowerCase();const items=quickSearchItems().filter(x=>!q||`${x.title} ${x.meta} ${x.type}`.toLowerCase().includes(q)).slice(0,30);box.innerHTML=items.length?items.map((x,i)=>`<button class="quick-search-result ${i===0?'active':''}" data-search-index="${i}" onclick="chooseQuickSearch(${i})"><div class="quick-search-result-title">▤ ${esc(x.title)}</div><div class="quick-search-result-meta">${esc(x.type)} · ${esc(x.meta)}</div></button>`).join(''):`<div class="quick-search-empty">Nenhum resultado encontrado.</div>`;window.__quickSearchItems=items}
           function chooseQuickSearch(i){const item=window.__quickSearchItems?.[i];if(!item)return;closeQuickSearch();item.action()}
-          function quickSearchKey(e){
-            if(e.key==='Escape'){e.preventDefault();closeQuickSearch();return}
-            if(e.key==='Enter'){e.preventDefault();const a=document.querySelector('.quick-search-result.active');if(a)chooseQuickSearch(Number(a.dataset.searchIndex));}
-            if(e.key==='ArrowDown'||e.key==='ArrowUp'){
-              e.preventDefault();const els=[...document.querySelectorAll('.quick-search-result')];if(!els.length)return;let i=els.findIndex(x=>x.classList.contains('active'));i=(i+(e.key==='ArrowDown'?1:-1)+els.length)%els.length;els.forEach(x=>x.classList.remove('active'));els[i].classList.add('active');els[i].scrollIntoView({block:'nearest'})
-            }
-          }
-          document.addEventListener('keydown',e=>{
-            if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){
-              e.preventDefault();openQuickSearch();
-            }
-          });
+          function quickSearchKey(e){if(e.key==='Escape'){e.preventDefault();closeQuickSearch();return}if(e.key==='Enter'){e.preventDefault();const a=document.querySelector('.quick-search-result.active');if(a)chooseQuickSearch(Number(a.dataset.searchIndex))}if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();const els=[...document.querySelectorAll('.quick-search-result')];if(!els.length)return;let i=els.findIndex(x=>x.classList.contains('active'));i=(i+(e.key==='ArrowDown'?1:-1)+els.length)%els.length;els.forEach(x=>x.classList.remove('active'));els[i].classList.add('active');els[i].scrollIntoView({block:'nearest'})}}
+          document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();openQuickSearch()}});
           document.addEventListener('click',e=>{const q=$('quickSearch');if(q&&e.target===q)closeQuickSearch()});
           '''
               s = s.replace("function init(){applyTheme();navRender();render()}init();", js + "\nfunction init(){applyTheme();navRender();render()}init();", 1)
 
-              p.write_text(s, encoding='utf-8')
+          if 'src="sync.js"' not in s:
+              s = s.replace('</body>', '<script src="sync.js"></script>\n</body>', 1)
 
-      - name: Commit
+          p.write_text(s, encoding='utf-8')
+
+      - name: Commit changes
         shell: bash
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html
           if git diff --cached --quiet; then
-            echo 'Quick search already present.'
+            echo 'No client enhancement changes needed.'
             exit 0
           fi
-          git commit -m 'Add Ctrl K quick search [skip ci]'
+          git commit -m 'Load JucaCards persistence sync [skip ci]'
           git push
