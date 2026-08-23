@@ -1,0 +1,119 @@
+name: Add JucaCards quick search
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  add-search:
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Add Ctrl+K quick search
+        shell: python
+        run: |
+          from pathlib import Path
+
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+
+          if 'id="quickSearch"' not in s:
+              css = r'''
+          .quick-search-backdrop{position:fixed;inset:0;background:#0009;display:none;place-items:start center;padding:7vh 16px 16px;z-index:100}
+          .quick-search-backdrop.show{display:grid}
+          .quick-search{width:min(670px,100%);max-height:82vh;overflow:hidden;background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:0 24px 80px #0008}
+          .quick-search-head{padding:20px 22px 16px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:14px;align-items:center}
+          .quick-search-head h2{margin:0;font-size:22px}
+          .quick-search-close{border:0;background:transparent;color:var(--muted);font-size:24px;padding:4px 8px}
+          .quick-search-input-wrap{padding:16px 22px 12px}
+          .quick-search-input{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--text);border-radius:12px;padding:14px;font-size:16px;outline:none}
+          .quick-search-input:focus{border-color:var(--primary);box-shadow:0 0 0 3px #6d5dfc22}
+          .quick-search-hint{font-size:12px;color:var(--muted);margin-top:8px}
+          .quick-search-results{max-height:56vh;overflow:auto;padding:4px 22px 20px}
+          .quick-search-result{width:100%;text-align:left;border:1px solid var(--line);background:var(--panel2);color:var(--text);border-radius:12px;padding:12px 14px;margin-top:8px;display:block}
+          .quick-search-result:hover,.quick-search-result.active{border-color:var(--primary);background:#171d33}
+          .quick-search-result-title{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+          .quick-search-result-meta{font-size:12px;color:var(--muted);margin-top:4px}
+          .quick-search-empty{padding:34px 10px;text-align:center;color:var(--muted)}
+          @media(max-width:620px){.quick-search-backdrop{padding:18px 10px}.quick-search{max-height:90vh}.quick-search-results{max-height:68vh}}
+          '''
+              s = s.replace('</style>', css + '\n</style>', 1)
+
+              modal = r'''
+          <div class="quick-search-backdrop" id="quickSearch" role="dialog" aria-modal="true" aria-label="Busca rápida">
+            <div class="quick-search">
+              <div class="quick-search-head">
+                <h2>Busca rápida</h2>
+                <button class="quick-search-close" onclick="closeQuickSearch()" aria-label="Fechar">×</button>
+              </div>
+              <div class="quick-search-input-wrap">
+                <input class="quick-search-input" id="quickSearchInput" autocomplete="off" placeholder="Digite para pesquisar..." oninput="renderQuickSearch()" onkeydown="quickSearchKey(event)">
+                <div class="quick-search-hint">Pesquise flashcards, concursos e disciplinas · <b>Ctrl + K</b></div>
+              </div>
+              <div class="quick-search-results" id="quickSearchResults"></div>
+            </div>
+          </div>
+          '''
+              s = s.replace('<div class="modal" id="modal"><div class="modalbox" id="modalbox"></div></div>', '<div class="modal" id="modal"><div class="modalbox" id="modalbox"></div></div>' + modal, 1)
+
+              js = r'''
+          function quickSearchItems(){
+            const items=[];
+            D.decks.forEach(d=>items.push({type:'Concurso',title:d,meta:`${D.cards.filter(c=>c.deck===d).length} flashcard(s)`,action:()=>openDeckCards(d)}));
+            D.cards.forEach(c=>items.push({type:'Flashcard',title:c.q,meta:c.deck,action:()=>startCard(c.id)}));
+            const disciplines=[...new Set(D.cards.map(c=>String(c.discipline||c.subject||'')).filter(Boolean))];
+            disciplines.forEach(d=>items.push({type:'Disciplina',title:d,meta:'Disciplina dos flashcards',action:()=>{state.filter='';state.deckFilter='';view('cards');setTimeout(()=>{state.filter=d;render()},0)}}));
+            return items;
+          }
+          function openQuickSearch(){
+            const q=$('quickSearch');
+            if(!q)return;
+            q.classList.add('show');
+            const input=$('quickSearchInput');
+            if(input){input.value='';renderQuickSearch();setTimeout(()=>input.focus(),20)}
+          }
+          function closeQuickSearch(){const q=$('quickSearch');if(q)q.classList.remove('show')}
+          function renderQuickSearch(){
+            const input=$('quickSearchInput'),box=$('quickSearchResults');if(!input||!box)return;
+            const q=input.value.trim().toLowerCase();
+            const items=quickSearchItems().filter(x=>!q||`${x.title} ${x.meta} ${x.type}`.toLowerCase().includes(q)).slice(0,30);
+            box.innerHTML=items.length?items.map((x,i)=>`<button class="quick-search-result ${i===0?'active':''}" data-search-index="${i}" onclick="chooseQuickSearch(${i})"><div class="quick-search-result-title">▤ ${esc(x.title)}</div><div class="quick-search-result-meta">${esc(x.type)} · ${esc(x.meta)}</div></button>`).join(''):`<div class="quick-search-empty">Nenhum resultado encontrado.</div>`;
+            window.__quickSearchItems=items;
+          }
+          function chooseQuickSearch(i){const item=window.__quickSearchItems?.[i];if(!item)return;closeQuickSearch();item.action()}
+          function quickSearchKey(e){
+            if(e.key==='Escape'){e.preventDefault();closeQuickSearch();return}
+            if(e.key==='Enter'){e.preventDefault();const a=document.querySelector('.quick-search-result.active');if(a)chooseQuickSearch(Number(a.dataset.searchIndex));}
+            if(e.key==='ArrowDown'||e.key==='ArrowUp'){
+              e.preventDefault();const els=[...document.querySelectorAll('.quick-search-result')];if(!els.length)return;let i=els.findIndex(x=>x.classList.contains('active'));i=(i+(e.key==='ArrowDown'?1:-1)+els.length)%els.length;els.forEach(x=>x.classList.remove('active'));els[i].classList.add('active');els[i].scrollIntoView({block:'nearest'})
+            }
+          }
+          document.addEventListener('keydown',e=>{
+            if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){
+              e.preventDefault();openQuickSearch();
+            }
+          });
+          document.addEventListener('click',e=>{const q=$('quickSearch');if(q&&e.target===q)closeQuickSearch()});
+          '''
+              s = s.replace("function init(){applyTheme();navRender();render()}init();", js + "\nfunction init(){applyTheme();navRender();render()}init();", 1)
+
+              p.write_text(s, encoding='utf-8')
+
+      - name: Commit
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          if git diff --cached --quiet; then
+            echo 'Quick search already present.'
+            exit 0
+          fi
+          git commit -m 'Add Ctrl K quick search [skip ci]'
+          git push
