@@ -1,1 +1,1 @@
-Persistence bootstrap fix deployed. Do not overwrite populated local data with empty remote data.
+Cross-device sync loader deployment trigger 2026-08-23
