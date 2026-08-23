@@ -1,6 +1,6 @@
 (()=>{
   const KEY='jucacards_rebuild_v3';
-  const FLAG='jucacards_remote_bootstrap_v1';
+  const FLAG='jucacards_remote_bootstrap_v2';
   let syncing=false;
   const originalSet=Storage.prototype.setItem;
   Storage.prototype.setItem=function(k,v){
@@ -10,20 +10,39 @@
   let timer;
   function queueSync(v){
     clearTimeout(timer);
-    timer=setTimeout(()=>push(v),500);
+    timer=setTimeout(()=>push(v),700);
   }
   async function push(v){
     if(syncing||!v)return;
-    try{syncing=true;await fetch('/api/data',{method:'PUT',headers:{'content-type':'application/json'},body:v,keepalive:true})}catch(e){console.warn('JucaCards: falha ao sincronizar',e)}finally{syncing=false}
+    try{
+      syncing=true;
+      const r=await fetch('/api/data',{method:'PUT',headers:{'content-type':'application/json'},body:v,keepalive:true});
+      if(!r.ok)throw new Error(`sync ${r.status}`);
+    }catch(e){console.warn('JucaCards: falha ao sincronizar',e)}finally{syncing=false}
   }
   async function bootstrap(){
     try{
       const r=await fetch('/api/data',{cache:'no-store'});
-      if(!r.ok)return;
-      const j=await r.json();
-      if(!j?.data)return;
       const local=localStorage.getItem(KEY);
+
+      if(r.status===404){
+        // First run: publish existing local data to the remote store.
+        if(local){
+          await push(local);
+          originalSet.call(localStorage,FLAG,'1');
+        }
+        return;
+      }
+      if(!r.ok)return;
+
+      const j=await r.json();
+      if(!j?.data){
+        if(local) await push(local);
+        return;
+      }
+
       const remote=JSON.stringify(j.data);
+      // Remote is the source of truth once it exists. Never replace remote with an empty local store.
       if(remote===local)return;
       originalSet.call(localStorage,KEY,remote);
       originalSet.call(localStorage,FLAG,'1');
