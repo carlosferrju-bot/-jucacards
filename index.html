@@ -11,7 +11,7 @@
 </style></head>
 <body>
 <div class="app"><aside class="side"><div class="brand"><div class="logo">JC</div><span>JucaCards</span></div><nav class="nav" id="nav"></nav></aside>
-<main class="main"><header class="top"><div class="title"><h1 id="heading">Dashboard</h1><div class="muted" id="sub">Seu centro de estudos</div></div><div class="actions"><button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Alternar tema" aria-label="Alternar tema">🌙</button><button class="btn" onclick="backup()">Exportar</button><button class="btn primary" onclick="openCard()">+ Novo flashcard</button></div></header><section id="page"></section></main></div>
+<main class="main"><header class="top"><div class="title"><h1 id="heading">Dashboard</h1><div class="muted" id="sub">Seu centro de estudos</div></div><div class="actions"><button class="btn" onclick="backup()">Exportar</button><button class="btn primary" onclick="openCard()">+ Novo flashcard</button></div></header><section id="page"></section></main></div>
 <div class="modal" id="modal"><div class="modalbox" id="modalbox"></div></div><input id="import" type="file" accept="application/json" class="hide" onchange="importData(event)">
 <script>
 'use strict';const KEY='jucacards_rebuild_v2',OLD='jucacards_rebuild_v1';
