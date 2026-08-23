@@ -1,7 +1,10 @@
 (()=>{
+  if(window.__JUCA_CARDS_SYNC_LOADED__) return;
+  window.__JUCA_CARDS_SYNC_LOADED__=true;
+
   const KEY='jucacards_data';
   const LEGACY_KEYS=['jucacards_rebuild_v3','jucacards_rebuild_v2','jucacards_rebuild_v1','jucacards_rebuild_v0'];
-  const FLAG='jucacards_remote_bootstrap_v3';
+  const FLAG='jucacards_remote_bootstrap_v4';
   let syncing=false;
   const originalSet=Storage.prototype.setItem;
 
@@ -25,6 +28,16 @@
     try{
       syncing=true;
       const r=await fetch('/api/data',{method:'PUT',headers:{'content-type':'application/json'},body:v,keepalive:true});
+      if(r.status===409){
+        const conflict=await r.json().catch(()=>null);
+        if(conflict?.data){
+          const remote=JSON.stringify(conflict.data);
+          originalSet.call(localStorage,KEY,remote);
+          originalSet.call(localStorage,KEY+'_last_good',remote);
+          location.reload();
+          return false;
+        }
+      }
       if(!r.ok)throw new Error(`sync ${r.status}`);
       originalSet.call(localStorage,KEY,v);
       originalSet.call(localStorage,KEY+'_last_good',v);
@@ -41,7 +54,6 @@
       const r=await fetch('/api/data',{cache:'no-store'});
 
       if(r.status===404){
-        // First remote run: preserve and upload whatever data already exists locally.
         if(local) await push(local);
         originalSet.call(localStorage,FLAG,'1');
         return;
@@ -55,7 +67,6 @@
       }
 
       const remote=JSON.stringify(j.data);
-      // Once remote data exists, it is the source of truth. Never overwrite it with an empty local state.
       if(remote!==local){
         originalSet.call(localStorage,KEY,remote);
         originalSet.call(localStorage,KEY+'_last_good',remote);
