@@ -1,0 +1,22 @@
+{
+  "cards": [],
+  "decks": [
+    {
+      "id": "d0",
+      "name": "Geral",
+      "desc": "Coleção padrão.",
+      "color": "#6d5dfc",
+      "disciplines": []
+    }
+  ],
+  "reviews": [],
+  "settings": {
+    "name": "Carlos",
+    "theme": "light",
+    "initial": 3,
+    "hard": 1,
+    "good": 4,
+    "easy": 7,
+    "max": 365
+  }
+}
