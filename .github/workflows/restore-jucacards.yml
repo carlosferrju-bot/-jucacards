@@ -1,40 +1,23 @@
 name: Restore JucaCards source
 
+# Mantido como ferramenta manual de recuperação. Não executar automaticamente
+# em pushes, pois isso sobrescreveria a camada responsiva do index.html.
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  restore:
+  validate:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          persist-credentials: true
-
-      - name: Restore complete JucaCards HTML
+      - name: Validate JucaCards
         shell: bash
         run: |
           set -euo pipefail
-          base64 -d source.gz.b64 | gzip -d > index.html
+          test -s source.gz.b64
           test -s index.html
-          grep -q "JucaCards" index.html
-
-      - name: Commit generated site
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          if git diff --quiet -- index.html; then
-            echo "index.html já está atualizado."
-            exit 0
-          fi
-          git add index.html
-          git commit -m "Restore complete JucaCards platform"
-          git push
+          grep -qi "JucaCards" index.html
