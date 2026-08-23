@@ -1,0 +1,1 @@
+Deployment trigger for JucaCards persistence migration.
