@@ -1,0 +1,102 @@
+name: Make JucaCards data persistence stable
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  patch-persistence:
+    if: "!contains(github.event.head_commit.message, '[persistence-safe]')"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch stable persistence and migration
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+
+          # Stable key: future UI/code deployments must never change this key.
+          s = re.sub(r"const KEY='jucacards_rebuild_v3'", "const KEY='jucacards_data'", s, count=1)
+
+          # Replace the loader with a backward-compatible, non-destructive loader.
+          new_load = r'''function load(){
+          try{
+            const stable=localStorage.getItem(KEY);
+            const candidates=[stable,localStorage.getItem('jucacards_rebuild_v3'),localStorage.getItem('jucacards_rebuild_v2'),localStorage.getItem('jucacards_rebuild_v1'),localStorage.getItem('jucacards_rebuild_v0')];
+            for(const raw of candidates){
+              if(!raw)continue;
+              try{
+                const parsed=JSON.parse(raw);
+                if(parsed && typeof parsed==='object' && (Array.isArray(parsed.cards)||Array.isArray(parsed.decks))){
+                  const data=norm(parsed);
+                  if(!stable && (data.cards.length||data.decks.length||data.reviews.length)){
+                    localStorage.setItem(KEY,JSON.stringify(data));
+                    localStorage.setItem(KEY+'_migration_backup',raw);
+                  }
+                  return data;
+                }
+              }catch(e){}
+            }
+          }catch(e){}
+          return def();
+          }'''
+          s, n = re.subn(r"function load\(\)\{.*?\}\s*function save\(\)", new_load + "\nfunction save()", s, count=1, flags=re.S)
+          if n != 1:
+            raise SystemExit('load() pattern not found; aborting to avoid damaging the app')
+
+          # Never overwrite a non-empty dataset with an empty dataset during ordinary saves.
+          new_save = r'''function save(){
+          try{
+            const incoming=JSON.stringify(D);
+            const current=localStorage.getItem(KEY);
+            if(current){
+              try{
+                const old=JSON.parse(current);
+                const oldCount=(Array.isArray(old.cards)?old.cards.length:0)+(Array.isArray(old.decks)?old.decks.length:0)+(Array.isArray(old.reviews)?old.reviews.length:0);
+                const newCount=(Array.isArray(D.cards)?D.cards.length:0)+(Array.isArray(D.decks)?D.decks.length:0)+(Array.isArray(D.reviews)?D.reviews.length:0);
+                if(oldCount>0 && newCount===0)return;
+              }catch(e){}
+            }
+            localStorage.setItem(KEY,incoming);
+            localStorage.setItem(KEY+'_last_good',incoming);
+          }catch(e){
+            try{localStorage.setItem(KEY+'_last_good',JSON.stringify(D))}catch(_){}
+          }
+          }'''
+          s, n = re.subn(r"function save\(\)\{.*?\}\s*function esc\(", new_save + "\nfunction esc(", s, count=1, flags=re.S)
+          if n != 1:
+            raise SystemExit('save() pattern not found; aborting to avoid damaging the app')
+
+          # Add an automatic recovery path if a malformed/empty primary record is ever encountered.
+          marker="function load(){"
+          recovery=r'''function recoverLastGood(){
+          try{
+            const raw=localStorage.getItem(KEY+'_last_good');
+            if(!raw)return false;
+            const x=norm(JSON.parse(raw));
+            if(x.cards.length||x.decks.length||x.reviews.length){D=x;localStorage.setItem(KEY,JSON.stringify(D));return true}
+          }catch(e){}
+          return false;
+          }
+          '''
+          if 'function recoverLastGood()' not in s:
+            s=s.replace(marker,recovery+marker,1)
+
+          p.write_text(s,encoding='utf-8')
+
+      - name: Commit patched app
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m 'Make JucaCards data persistence stable [persistence-safe]'
+          git push
