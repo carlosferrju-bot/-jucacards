@@ -1,0 +1,38 @@
+name: Build JucaCards platform
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'index.html'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Rebuild index.html from complete source
+        shell: bash
+        run: |
+          set -euo pipefail
+          base64 -d source.gz.b64 | gzip -d > index.html
+          test -s index.html
+          grep -q "JucaCards" index.html
+
+      - name: Commit generated platform
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          if git diff --cached --quiet; then
+            echo "index.html already up to date"
+            exit 0
+          fi
+          git commit -m "build: publish complete JucaCards platform"
+          git push
