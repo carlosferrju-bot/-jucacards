@@ -1,0 +1,68 @@
+name: Fix JucaCards theme button
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Restore working theme button
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+
+          marker = '<script id="jucacards-theme-fix">'
+          if marker not in s:
+              fix = r'''<script id="jucacards-theme-fix">
+(function(){
+  function setupThemeButton(){
+    const actions=document.querySelector('.top .actions');
+    if(!actions)return;
+    let btn=document.getElementById('themeToggle');
+    if(!btn){
+      btn=document.createElement('button');
+      btn.id='themeToggle';
+      btn.className='theme-toggle';
+      btn.type='button';
+      btn.setAttribute('aria-label','Alternar tema');
+      btn.title='Alternar tema';
+      btn.textContent='🌙';
+      btn.addEventListener('click',function(){
+        if(typeof window.toggleTheme==='function') window.toggleTheme();
+      });
+      actions.insertBefore(btn,actions.firstChild);
+    }
+    if(typeof window.applyTheme==='function') window.applyTheme();
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setupThemeButton);
+  else setupThemeButton();
+})();
+</script>'''
+              s = s.replace('</body>', fix + '</body>')
+              p.write_text(s, encoding='utf-8')
+          else:
+              print('Theme fix already installed.')
+
+      - name: Commit fix
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          if git diff --cached --quiet; then
+            echo 'No changes needed.'
+            exit 0
+          fi
+          git commit -m 'Fix working theme toggle [skip ci]'
+          git push
